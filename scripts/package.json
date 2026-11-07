@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@checkpoint/agents": "workspace:*",
+    "@checkpoint/guard": "workspace:*",
     "@checkpoint/shared": "workspace:*"
   }
 }

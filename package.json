@@ -24,7 +24,11 @@
     "mock": "pnpm --filter @checkpoint/agents mock",
     "snapshot:check": "tsx packages/agents/src/snapshot-check.ts",
     "verify:audit": "tsx scripts/verify-audit.ts",
-    "llm:check": "tsx scripts/llm-check.ts"
+    "llm:check": "tsx scripts/llm-check.ts",
+    "settle": "tsx scripts/settle.ts",
+    "contracts:build": "bash scripts/contracts-build.sh",
+    "contracts:test": "bash scripts/contracts-build.sh && cargo test --workspace",
+    "vault:check": "tsx scripts/vault-views-check.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

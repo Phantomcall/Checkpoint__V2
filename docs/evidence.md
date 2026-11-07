@@ -8,11 +8,11 @@ One row per acceptance test (PRD §16). Every row says how it was run, what happ
 
 | What | Account / value | Check |
 |---|---|---|
-| Vault | `vault.cpdemo.testnet` | _code hash, deploy tx_ |
-| cpUSD (NEP-141, 6 decimals) | `cpusd.cpdemo.testnet` | _deploy tx_ |
+| Vault | `vault.cpdemo.testnet` | code hash `4GcxzNMdU3dVLw8H3w2sydZ8RcZG56uXsmC9fQGaZQfS`, deploy [HXAL…evABb](https://testnet.nearblocks.io/txns/HXALtS5eXQkFm5rqoGUcLYNhCVKwRTcwjM7LW5cevABb) (6 Nov) |
+| cpUSD (NEP-141, 6 decimals) | `cpusd.cpdemo.testnet` | code hash `EjXGxRYJk8nmQNHi6xs5MMJtrPgfSo6njWGA9bJbZG9N`, deploy [7Q82…mt27J](https://testnet.nearblocks.io/txns/7Q82hhbrqUeq2pb15j8sD3N1rvHBCuBUA98aj11mt27J) (6 Nov) |
 | Council (Sputnik v2) | `checkpoint-council.sputnik-v2.testnet` | _create tx_ |
 | Guardian | `guardian.cpdemo.testnet` | `get_policy().guardian` |
-| Guard public key | _base58, version_ | `get_policy().guard_pubkey` |
+| Guard public key | `CAR74z4PpMpNAmCnmaRY3dPrjFUSMrswynTah4oSsBrY`, version 1 | `get_policy().guard_pubkey` |
 | Rules hash | `89e1b151b955375cf1ae7b5af890d0212ad6284e21dc280bc504090d63f9c23d` | `pnpm rules:hash` = `get_policy().rules_hash` |
 | Offer snapshot | `data/snapshot/` frozen 5 Nov 2026 | `pnpm snapshot:check` clean |
 

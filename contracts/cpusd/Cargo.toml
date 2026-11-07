@@ -1,0 +1,21 @@
+[package]
+name = "checkpoint-cpusd"
+version = "0.1.0"
+description = "cpUSD: NEP-141 test token for Checkpoint (no value)"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+# Test-only fault switches (set_fail_transfers, burn_from). Never deploy a build with this on testnet.
+sandbox = []
+
+[dependencies]
+near-sdk = { workspace = true }
+near-contract-standards = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }

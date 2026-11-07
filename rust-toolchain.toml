@@ -1,0 +1,7 @@
+# Pinned for reproducible contract builds. near-sdk 5.30 targets protocol
+# version 85+, so rustc 1.87+ wasm (bulk-memory opcodes) is accepted; testnet
+# was on protocol 88 when this was pinned (6 Nov 2026).
+[toolchain]
+channel = "1.96.0"
+components = ["rustfmt", "clippy"]
+targets = ["wasm32-unknown-unknown"]

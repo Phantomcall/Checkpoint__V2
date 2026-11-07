@@ -168,9 +168,9 @@ Verify anywhere with `verifyEvidenceBundle(bundle, { guardPubkeyB58, chainBasket
 
 ---
 
-## Vault views Guard and the agents read (proposal for Isaac)
+## Vault views Guard and the agents read
 
-The PRD names these views but not their JSON. The services parse them with the schemas in [`packages/shared/src/vault-views.ts`](../packages/shared/src/vault-views.ts) and fail closed on any other shape. Amounts are U128 strings.
+The PRD names these views but not their JSON. `contracts/vault/src/views.rs` implements exactly these shapes (checked live with `pnpm vault:check`). The services parse them with the schemas in [`packages/shared/src/vault-views.ts`](../packages/shared/src/vault-views.ts) and fail closed on any other shape. Amounts are U128 strings.
 
 | View | Args | Returns |
 |---|---|---|

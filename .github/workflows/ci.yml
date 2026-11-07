@@ -1,5 +1,5 @@
 # CI (task D-7.2, FR-DX06): types, lint, tests and a secret scan on every PR and push to main.
-# Rust contract tests and `pnpm demo:sandbox` join once contracts/ and the sandbox script land (H13).
+# The contracts job runs Rust unit tests and near-workspaces sandbox tests. `pnpm demo:sandbox` joins with H13.
 name: ci
 
 on:
@@ -39,13 +39,17 @@ jobs:
         run: pnpm snapshot:check data/snapshot
 
   contracts:
-    if: hashFiles('contracts/**/Cargo.toml') != ''
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - name: Rust toolchain (pinned by rust-toolchain.toml)
-        run: rustup show && rustup target add wasm32-unknown-unknown
+        run: rustup toolchain install && rustup show active-toolchain
       - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Build the wasm (plain cargo; cargo-near needs libudev and is only used for testnet deploys)
+        run: CONTRACTS_BUILD=cargo bash scripts/contracts-build.sh
+      # Unit tests (incl. the shared vector) and near-workspaces sandbox tests.
       - run: cargo test --workspace
 
   secrets:

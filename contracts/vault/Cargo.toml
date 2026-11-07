@@ -1,0 +1,18 @@
+[package]
+name = "checkpoint-vault"
+version = "0.1.0"
+description = "Checkpoint Vault: holds owner funds and pays vendors only for Guard-signed, owner-approved baskets"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = { workspace = true }
+
+[dev-dependencies]
+near-sdk = { workspace = true, features = ["unit-testing"] }
+ed25519-dalek = "2"
+serde_json = "1"

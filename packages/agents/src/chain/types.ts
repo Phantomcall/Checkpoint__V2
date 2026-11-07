@@ -14,7 +14,7 @@ export interface VaultChain {
 
 /**
  * Submits execute_basket with the Settlement Agent's function-call key.
- * The real module is Isaac's (task I-3.3, handoff H9): see settlement.ts.
+ * Implemented in settlement.ts (task I-3.3, handoff H9).
  */
 export interface Settlement {
   execute(payloadB64: string, signatureB64: string): Promise<{ tx_hash: string }>;

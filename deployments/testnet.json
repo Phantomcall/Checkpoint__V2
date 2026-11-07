@@ -1,0 +1,57 @@
+{
+  "network": "testnet",
+  "root": "cpdemo.testnet",
+  "vault": "vault.cpdemo.testnet",
+  "token": "cpusd.cpdemo.testnet",
+  "agent": "agent.cpdemo.testnet",
+  "guardian": "guardian.cpdemo.testnet",
+  "owner_demo": "owner-demo.cpdemo.testnet",
+  "vendors": {
+    "vendor-01": "vendor-01.cpdemo.testnet",
+    "vendor-02": "vendor-02.cpdemo.testnet",
+    "vendor-03": "vendor-03.cpdemo.testnet",
+    "vendor-04": "vendor-04.cpdemo.testnet",
+    "vendor-05": "vendor-05.cpdemo.testnet (not allowlisted, AT-04)",
+    "vendor-06": "vendor-06.cpdemo.testnet (not registered on cpUSD, AT-10)"
+  },
+  "dao": "checkpoint-council.sputnik-v2.testnet (not created yet; dao_id is cpdemo.testnet until the hand-over)",
+  "deploys": [
+    {
+      "date": "2026-11-06",
+      "contract": "cpusd.cpdemo.testnet",
+      "code_hash": "EjXGxRYJk8nmQNHi6xs5MMJtrPgfSo6njWGA9bJbZG9N",
+      "tx": "7Q82hhbrqUeq2pb15j8sD3N1rvHBCuBUA98aj11mt27J",
+      "build": "cargo-near 0.23 non-reproducible-wasm, rust 1.96.0, no sandbox feature"
+    },
+    {
+      "date": "2026-11-06",
+      "contract": "vault.cpdemo.testnet",
+      "code_hash": "4GcxzNMdU3dVLw8H3w2sydZ8RcZG56uXsmC9fQGaZQfS",
+      "tx": "HXALtS5eXQkFm5rqoGUcLYNhCVKwRTcwjM7LW5cevABb",
+      "build": "cargo-near 0.23 non-reproducible-wasm, rust 1.96.0",
+      "policy_version": 1
+    }
+  ],
+  "rpc_url": "https://rpc.testnet.near.org (provisional until D-04)",
+  "guard_pubkey_v1": "CAR74z4PpMpNAmCnmaRY3dPrjFUSMrswynTah4oSsBrY",
+  "rules_hash": "89e1b151b955375cf1ae7b5af890d0212ad6284e21dc280bc504090d63f9c23d",
+  "agent_fc_public_key": "ed25519:719FJC48v52RqDGevvFZShC5YaA2FVQcjPB21zoaFREG",
+  "smoke": [
+    {
+      "what": "owner-demo deposits 200 cpUSD",
+      "tx": "4wUAUpvQJYNudJ8kBqzVg3Ar1QirvQpLGBDo4A1p1ZfN"
+    },
+    {
+      "what": "owner-demo set_agent(agent)",
+      "tx": "9B9ufjwp3Q7SpzPzJ77cbXUbtPrGUv3x4UhMT4GwEdcR"
+    },
+    {
+      "what": "approve_basket 5cacb49c\u2026 (1 cpUSD to vendor-01)",
+      "tx": "DrvpjDkhwstAFb61FogNQhX86Yv7NMoMNJamFZN2c2T8"
+    },
+    {
+      "what": "pnpm settle with the FC key: Completed, vendor-01 received 1 cpUSD; replay rejected ERR_ALREADY_USED",
+      "tx": "2ptpZr2o4WnfkTmuXfxfunoDDePV9KsB5F8KS3iaF2p4"
+    }
+  ]
+}
