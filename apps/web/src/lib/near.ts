@@ -18,6 +18,16 @@ export async function view<T>(contractId: string, method: string, args: Record<s
   return res as T;
 }
 
+/** True once the account holds contract code. A missing account, or one with no code (the all-ones hash), is false. */
+export async function hasContract(accountId: string) {
+  try {
+    const a = await rpc().viewAccount({ accountId, blockQuery: { finality: "final" } });
+    return !/^1+$/.test(a.code_hash);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Re-reads a view until `done(result)` is true or the timeout passes. Used after transactions
  * instead of optimistic updates, so the chain stays the source of truth (P-1.2).

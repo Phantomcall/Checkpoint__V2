@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { TrustLabel } from "@/components/trust-label";
-import { agents } from "@/lib/agents/client";
+import { agents, DEV_GUARD_PUBKEY } from "@/lib/agents/client";
 import type { EvidenceBundle } from "@/lib/agents/types";
 import { config, txUrl } from "@/lib/config";
 import { formatAmount, shortHash } from "@/lib/format";
-import { rpc, vault } from "@/lib/near";
+import { hasContract, vault } from "@/lib/near";
 import { useWallet } from "@/lib/wallet";
 
 const DEMO_OWNER = "owner-demo.cpdemo.testnet";
@@ -29,17 +29,19 @@ interface Row {
   ok: boolean;
 }
 
-/** Where the list came from. The chain is the authority; the agents service is the fallback before the Vault is deployed. */
+/**
+ * Where the list came from. The chain is the authority. The agents service is used instead when the Vault isn't
+ * deployed, or when `pnpm mock` is behind the app: its baskets settle on a stand-in chain, not on testnet.
+ */
 type Source = "chain" | "agents";
 
-async function vaultDeployed() {
-  try {
-    await rpc().viewAccount({ accountId: config.vaultId, blockQuery: { finality: "final" } });
-    return true;
-  } catch {
-    return false;
-  }
-}
+/** Which terminal command matches where the baskets came from. The dev key is the published `pnpm mock` key. */
+type Hint = "chain" | "dev" | "browser";
+const TERMINAL_NOTE: Record<Hint, string> = {
+  chain: "The same checks, without this website: the bundle from the agents service, the basket from the chain.",
+  dev: "The same checks, without this website: the bundle from the agents service, checked against the published dev key it signs with.",
+  browser: "The in-browser agents keep bundles in this browser, so download a basket's Evidence JSON first. The key is the published dev key.",
+};
 
 async function fetchBundle(basketId: string): Promise<{ bundle: EvidenceBundle | null; error: string | null }> {
   try {
@@ -86,7 +88,7 @@ function useAudit(owner: string) {
     setRows(null);
     setError(null);
     try {
-      if (await vaultDeployed()) {
+      if (!(await agents.hasDevWallet()) && (await hasContract(config.vaultId))) {
         setSource("chain");
         const [baskets, policy] = await Promise.all([vault.baskets(owner), vault.policy().catch(() => null)]);
         const out = await Promise.all(
@@ -146,6 +148,8 @@ export default function AuditPage() {
     setFound(toRow(id, bundle, null, chain, source === "chain" ? ((await vault.policy().catch(() => null))?.guard_pubkey ?? null) : await agents.guardPubkey()));
   }
 
+  const hint: Hint = source === "chain" ? "chain" : agents.mode === "mock" ? "browser" : dev ? "dev" : "chain";
+
   useEffect(() => {
     if (rows?.length && open === null) setOpen(rows[0]!.basket_id);
   }, [rows, open]);
@@ -162,7 +166,7 @@ export default function AuditPage() {
           {!accountId && <span className="text-faint"> · sign in to see yours</span>}
           {source && (
             <span className="ml-2 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ring-inset ring-line">
-              {source === "chain" ? "from the Vault · get_baskets" : agents.mode === "mock" ? "from this browser · in-browser agents" : "from the agents service · Vault not deployed here"}
+              {source === "chain" ? "from the Vault · get_baskets" : agents.mode === "mock" ? "from this browser · in-browser agents" : dev ? "from the agents service · stand-in chain" : "from the agents service · Vault not deployed here"}
             </span>
           )}
         </p>
@@ -234,10 +238,11 @@ export default function AuditPage() {
         </form>
         <div className="panel rounded-[var(--radius-card)] p-5">
           <p className="eyebrow">Or verify from a terminal</p>
-          <p className="mt-2 text-[13px] text-muted">The same checks, without this website: the bundle from the agents service, the basket from the chain.</p>
+          <p className="mt-2 text-[13px] text-muted">{TERMINAL_NOTE[hint]}</p>
           <pre className="mt-3 overflow-x-auto rounded-2xl bg-[color-mix(in_srgb,var(--color-bg)_70%,transparent)] p-4 font-mono text-[12px] leading-relaxed text-fg ring-1 ring-line">
             <span className="text-faint">$ </span>pnpm verify:audit {"<basket_id>"} \{"\n"}
-            {"    "}--rpc {config.rpcUrl} --vault {config.vaultId}
+            {"    "}
+            {hint === "chain" ? `--rpc ${config.rpcUrl} --vault ${config.vaultId}` : `${hint === "browser" ? "--file evidence-<basket_id>.json " : ""}--pubkey ${DEV_GUARD_PUBKEY}`}
           </pre>
         </div>
       </section>
@@ -326,6 +331,7 @@ function BasketRow({ r, open, onToggle, dev }: { r: Row; open: boolean; onToggle
             {r.bundle && (
               <dl className="mt-4 space-y-2 font-mono text-[11px]">
                 {[
+                  ["basket id", r.basket_id],
                   ["basket hash", r.hash],
                   ["evidence hash", r.bundle.evidence_hash],
                   ["rules hash", r.bundle.core.rules.rules_hash],
@@ -349,7 +355,7 @@ function BasketRow({ r, open, onToggle, dev }: { r: Row; open: boolean; onToggle
 
           <div className={`rounded-2xl p-4 ring-1 ring-inset ${r.ok ? "ring-line" : "bg-bad-soft ring-bad/40"}`}>
             <p className="flex items-center gap-1.5 font-mono text-[10px] tracking-wider text-muted uppercase">
-              <FileSearch aria-hidden className="size-3.5" /> verifyEvidenceBundle · in your browser
+              <FileSearch aria-hidden className="size-3.5" /> Checked in your browser
             </p>
             {r.bundle ? (
               <ul className="mt-3 space-y-2">

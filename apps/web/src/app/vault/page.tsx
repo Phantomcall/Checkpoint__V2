@@ -1,18 +1,20 @@
 "use client";
 
-import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, Bot, CircleDashed, Gauge, Hammer, Loader2, PauseCircle, RefreshCw, UserPlus, Wallet } from "lucide-react";
+import { AlertTriangle, ArrowDownToLine, ArrowUpFromLine, Bot, CircleDashed, Eye, Gauge, Hammer, Loader2, PauseCircle, RefreshCw, UserPlus, Wallet } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Ghost, PageHeader } from "@/components/page-header";
 import { TrustLabel } from "@/components/trust-label";
 import { accountUrl, config, txUrl } from "@/lib/config";
 import { humanError } from "@/lib/errors";
 import { formatAmount, parseAmount } from "@/lib/format";
-import { ft, pollView, rpc, vault, type VaultBalanceView, type VaultOwnerStateView, type VaultPolicyView } from "@/lib/near";
+import { ft, hasContract, pollView, vault, type VaultBalanceView, type VaultOwnerStateView, type VaultPolicyView } from "@/lib/near";
 import { utcDayIndex } from "@checkpoint/shared";
 import { deposit, isRegistered, setAgent, storageDeposit, storageMin, txHash, withdraw, type Tx } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 
 const AGENT = "agent.cpdemo.testnet";
+/** The account the demo deposits into. Anyone can read a Vault balance, so it can be shown without a wallet. */
+const DEMO_OWNER = "owner-demo.cpdemo.testnet";
 
 interface Data {
   vaultLive: boolean;
@@ -22,15 +24,6 @@ interface Data {
   policy: VaultPolicyView | null;
   owner: VaultOwnerStateView | null;
   balance: VaultBalanceView | null;
-}
-
-async function exists(accountId: string) {
-  try {
-    await rpc().viewAccount({ accountId, blockQuery: { finality: "final" } });
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /** FR-UI02 / P-1.2: every number here is read from chain; after each transaction we re-read rather than guess. */
@@ -43,7 +36,7 @@ function useVault(accountId: string | null) {
     setLoading(true);
     setError(null);
     try {
-      const [vaultLive, tokenLive] = await Promise.all([exists(config.vaultId), exists(config.tokenId)]);
+      const [vaultLive, tokenLive] = await Promise.all([hasContract(config.vaultId), hasContract(config.tokenId)]);
       const registered = tokenLive ? await isRegistered(accountId) : false;
       const wallet = tokenLive && registered ? BigInt(await ft.balanceOf(config.tokenId, accountId)) : 0n;
       const [policy, owner, balance] = vaultLive
@@ -67,7 +60,14 @@ function useVault(accountId: string | null) {
 
 export default function VaultPage() {
   const { ready, accountId, signIn, send } = useWallet();
-  const { data, error, loading, reload } = useVault(accountId);
+  // Read-only view of another account (?view=<account>, or the demo owner), until a wallet signs in.
+  const [viewing, setViewing] = useState<string | null>(null);
+  useEffect(() => {
+    setViewing(new URLSearchParams(location.search).get("view"));
+  }, []);
+  const shown = accountId ?? viewing;
+  const readOnly = !accountId;
+  const { data, error, loading, reload } = useVault(shown);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<{ tone: "ok" | "bad"; text: string; tx?: string } | null>(null);
   const [tab, setTab] = useState<"deposit" | "withdraw">("deposit");
@@ -110,7 +110,7 @@ export default function VaultPage() {
   const header = (
     <PageHeader eyebrow="Vault · cpUSD" title="Your vault" intro="cpUSD held by the Vault contract. Agents can spend it only through baskets you approve, inside your caps.">
       <TrustLabel kind="onchain" />
-      {accountId && (
+      {shown && (
         <button onClick={() => reload()} aria-label="Refresh from chain" className="key key-ghost size-9">
           <RefreshCw aria-hidden className={`size-4 ${loading ? "animate-spin" : ""}`} />
         </button>
@@ -118,14 +118,19 @@ export default function VaultPage() {
     </PageHeader>
   );
 
-  if (!ready || !accountId) {
+  if (!shown) {
     return (
       <>
         {header}
         <StateCard Icon={Wallet} title="Sign in to see your vault" body="Balances, limits and agent access are read from NEAR for your account. Use a testnet wallet: Meteor, Intear or Nightly.">
-          <button onClick={() => signIn()} disabled={!ready} className="key key-primary h-11 px-5 text-sm">
-            <Wallet aria-hidden className="size-4" /> Sign in
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setViewing(DEMO_OWNER)} className="key key-ghost h-11 px-5 text-sm">
+              <Eye aria-hidden className="size-4" /> View the demo owner
+            </button>
+            <button onClick={() => signIn()} disabled={!ready} className="key key-primary h-11 px-5 text-sm">
+              <Wallet aria-hidden className="size-4" /> Sign in
+            </button>
+          </div>
         </StateCard>
         <Skeleton />
       </>
@@ -135,6 +140,16 @@ export default function VaultPage() {
   return (
     <>
       {header}
+      {readOnly && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 text-[13px] text-muted ring-1 ring-inset ring-line">
+          <span className="flex items-center gap-2">
+            <Eye aria-hidden className="size-4 text-accent" /> Read-only view of <span className="font-mono text-fg">{shown}</span>, straight from chain
+          </span>
+          <button onClick={() => signIn()} disabled={!ready} className="key key-primary h-8 px-3 text-xs">
+            <Wallet aria-hidden className="size-3.5" /> Sign in for your own
+          </button>
+        </div>
+      )}
       {error && <Banner tone="bad" Icon={AlertTriangle} text={error} />}
       {data && !data.vaultLive && (
         <StateCard Icon={Hammer} title="The Vault isn't on testnet yet" body={`${config.vaultId} hasn't been deployed yet. Until it is, this page can only read the token side.`}>
@@ -158,7 +173,15 @@ export default function VaultPage() {
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <div className="panel edge-light rounded-[var(--radius-card)] p-5">
-              {!data.tokenLive ? (
+              {readOnly ? (
+                <div>
+                  <p className="text-sm font-medium text-fg">Deposits and withdrawals need the owner&apos;s wallet</p>
+                  <p className="mt-1 text-[13px] text-muted">
+                    Only <span className="font-mono">{shown}</span> can move its cpUSD. {data.tokenLive && data.registered ? `Its wallet holds ${formatAmount(data.wallet)} outside the Vault.` : ""}
+                  </p>
+                  {data.policy && <Enforced policy={data.policy} />}
+                </div>
+              ) : !data.tokenLive ? (
                 <p className="flex items-center gap-2 text-sm text-muted">
                   <CircleDashed aria-hidden className="size-4" /> cpUSD isn&apos;t deployed yet ({config.tokenId}, handoff H4).
                 </p>
@@ -167,7 +190,7 @@ export default function VaultPage() {
                   <p className="text-sm font-medium text-fg">Register on cpUSD first</p>
                   <p className="mt-1 text-[13px] text-muted">NEP-145 storage: your account needs a small NEAR deposit on the token before it can hold cpUSD. Unused NEAR is refunded.</p>
                   <button
-                    onClick={() => run("Register on cpUSD", async () => storageDeposit(accountId, await storageMin()), (d) => !!d?.registered)}
+                    onClick={() => run("Register on cpUSD", async () => storageDeposit(accountId!, await storageMin()), (d) => !!d?.registered)}
                     disabled={!!busy}
                     className="key key-primary mt-4 h-10 px-5 text-sm"
                   >
@@ -250,11 +273,11 @@ export default function VaultPage() {
                     role="switch"
                     aria-checked={agentOn}
                     aria-label="Authorise settlement agent"
-                    disabled={!data.vaultLive || !!busy}
+                    disabled={!data.vaultLive || !!busy || readOnly}
                     onClick={() => run(agentOn ? "Revoke agent" : "Authorise agent", () => setAgent(AGENT, !agentOn), (d) => !!d?.owner?.agents?.includes(AGENT) !== agentOn)}
                     className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40 ${agentOn ? "bg-accent" : "bg-line-strong"}`}
                   >
-                    <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform ${agentOn ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+                    <span className={`absolute top-0.5 left-0 size-5 rounded-full bg-white shadow transition-transform ${agentOn ? "translate-x-[22px]" : "translate-x-0.5"}`} />
                   </button>
                 </div>
               </div>
@@ -294,6 +317,33 @@ function Limits({ owner }: { owner: VaultOwnerStateView }) {
         <div className="h-full rounded-full bg-[linear-gradient(90deg,var(--color-accent-strong),var(--color-accent))]" style={{ width: `${Math.min(100, pct)}%` }} />
       </div>
       <p className="mt-2 font-mono text-[11px] text-muted">max per basket {formatAmount(owner.max_basket)}</p>
+    </div>
+  );
+}
+
+/** What the Vault checks on every basket, read from get_policy. These hold whatever Guard or the agents say. */
+function Enforced({ policy }: { policy: VaultPolicyView }) {
+  const rows: [string, React.ReactNode][] = [
+    ["Vendors", <span key="v" className="flex flex-wrap gap-1">{policy.vendors.map((v) => <span key={v} className="rounded-full px-2 py-0.5 ring-1 ring-inset ring-line">{v.split(".")[0]}</span>)}</span>],
+    ["Token", policy.tokens.join(", ")],
+    ["Per basket", formatAmount(policy.max_basket_total)],
+    ["Per day", formatAmount(policy.daily_cap)],
+    ["Vendors per basket", String(policy.max_vendors)],
+    ["Rules hash", `${policy.rules_hash.slice(0, 16)}…`],
+    ["Guard key", `v${policy.guard_key_version}${policy.guard_key_disabled ? " · disabled" : ""} · ${policy.guard_pubkey.slice(0, 10)}…`],
+    ["Policy version", String(policy.policy_version)],
+  ];
+  return (
+    <div className="mt-5 border-t border-line pt-4">
+      <p className="eyebrow">Enforced by the Vault on every basket</p>
+      <dl className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2 font-mono text-[12px]">
+        {rows.map(([k, v]) => (
+          <div key={k} className="contents">
+            <dt className="text-muted">{k}</dt>
+            <dd className="min-w-0 text-fg">{v}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
