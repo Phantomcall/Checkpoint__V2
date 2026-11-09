@@ -1,7 +1,8 @@
 "use client";
 
 import { basketHashHex, decodePayload, fromBase58, fromBase64, fromHex, toHex, verifyBasketSignature, type BasketPayloadV1 } from "@checkpoint/shared";
-import { ArrowDownLeft, Check, CircleDashed, Copy, ExternalLink, Fingerprint, FlaskConical, Loader2, ShieldAlert, Timer } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, Check, CircleDashed, Copy, ExternalLink, Fingerprint, FlaskConical, Loader2, Receipt, ShieldAlert, Timer } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { TrustLabel } from "@/components/trust-label";
 import type { DeskView } from "@/lib/agents/reducer";
@@ -252,6 +253,11 @@ export function BasketCard({
                 </a>
               )}
             </p>
+          )}
+          {view.settlement.final_status && (
+            <Link href={`/audit?basket=${d.basket_id}`} className="key key-secondary h-11 w-full text-sm">
+              <Receipt aria-hidden className="size-4" /> See the receipts on Audit <ArrowRight aria-hidden className="size-4" />
+            </Link>
           )}
         </div>
       )}

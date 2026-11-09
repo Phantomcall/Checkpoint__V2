@@ -66,7 +66,7 @@ function lanes(prev: Record<LaneKey, Lane>, v: RequestView, e: AgentEvent): Reco
       set("guard", { status: "done", detail: `signed · key v${e.data.signed.guard_key_version}` });
       break;
     case "guard.refused":
-      set("guard", { status: "failed", detail: e.data.code });
+      set("guard", { status: "failed", detail: e.data.code === "GUARD_UNAVAILABLE" ? "unavailable, nothing signed" : e.data.code });
       break;
     case "approval.waiting":
       set("approval", { status: "active", detail: "waiting for your wallet" });
@@ -89,6 +89,11 @@ function lanes(prev: Record<LaneKey, Lane>, v: RequestView, e: AgentEvent): Reco
       break;
     case "error": {
       if (e.data.recoverable) break;
+      if (e.data.code === "GUARD_UNAVAILABLE") {
+        if (l.research.status === "active") set("research", { status: "done", detail: `${v.offers.length} offers` });
+        set("guard", { status: "failed", detail: "unavailable, nothing signed" });
+        break;
+      }
       const active = (Object.keys(l) as LaneKey[]).find((k) => l[k].status === "active") ?? "research";
       set(active, { status: "failed", detail: e.data.code === "CANCELLED" ? "cancelled" : e.data.code });
       break;
@@ -98,6 +103,12 @@ function lanes(prev: Record<LaneKey, Lane>, v: RequestView, e: AgentEvent): Reco
 }
 
 export type Tone = "info" | "warn" | "ok" | "bad";
+
+/**
+ * Guard was down or couldn't reach the chain (AT-14). The agents report it either as an error event or, at signing,
+ * as guard.refused with no findings. Either way Guard judged nothing, so the UI must not call it a refusal.
+ */
+export const guardUnavailable = (v: RequestView) => v.refusal?.code === "GUARD_UNAVAILABLE" || v.errors.some((e) => e.code === "GUARD_UNAVAILABLE");
 
 /** One status pill for the whole request, from the shared state plus what it is waiting on. */
 export function stageOf(v: RequestView): { label: string; tone: Tone } {
@@ -123,6 +134,7 @@ export function stageOf(v: RequestView): { label: string; tone: Tone } {
           ? { label: "Partially paid", tone: "warn" }
           : { label: "Payouts failed", tone: "bad" };
     case "refused":
+      if (guardUnavailable(v)) return { label: "Guard unavailable", tone: "bad" };
       return v.refusal ? { label: "Refused by Guard", tone: "bad" } : { label: "Stopped", tone: "bad" };
     case "expired":
       return { label: "Approval window closed", tone: "bad" };

@@ -198,7 +198,7 @@ const TONE: Record<Line["t"], string> = {
   cmd: "text-white/85",
   out: "text-white/50",
   err: "text-[#ff8794]",
-  ok: "text-[#5ff0bb]",
+  ok: "text-[#f0c674]",
   note: "text-white/70 font-sans text-[13px] italic",
 };
 
@@ -226,7 +226,7 @@ function Terminal({ lines }: { lines: Line[] }) {
           className={`transition-all duration-300 ${TONE[l.t]} ${l.t === "note" ? "mt-5 border-t border-white/[0.07] pt-4" : ""}`}
           style={{ opacity: i < n ? 1 : 0, transform: i < n ? "none" : "translateX(-6px)" }}
         >
-          {l.t === "cmd" && <span className="mr-2 text-[#5ff0bb]">$</span>}
+          {l.t === "cmd" && <span className="mr-2 text-[#f0c674]">$</span>}
           {l.t === "err" && <span className="mr-2">✕</span>}
           {l.t === "ok" && <span className="mr-2">✓</span>}
           {l.t === "out" && <span className="mr-2 text-white/25">›</span>}

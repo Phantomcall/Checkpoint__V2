@@ -2,18 +2,24 @@
 
 One row per acceptance test (PRD §16). Every row says how it was run, what happened, and where to check it: a transaction on [testnet.nearblocks.io](https://testnet.nearblocks.io) or a test name you can run yourself. Nothing here is claimed without one of those.
 
-**Status:** template. Rows are filled from the gate (Mon 9 Nov) onward and frozen on Wed 12 Nov.
+**Status:** deployment rows filled on 6 Nov. Test rows are filled from the gate (Mon 9 Nov) onward and frozen on Wed 12 Nov.
 
 ## Deployed on testnet
 
+Read on 6 Nov 2026 from `rpc.testnet.fastnear.com` (`view_account`, `get_policy`, `get_owner_state`, `get_balance`) and from nearblocks.
+
 | What | Account / value | Check |
 |---|---|---|
-| Vault | `vault.cpdemo.testnet` | code hash `4GcxzNMdU3dVLw8H3w2sydZ8RcZG56uXsmC9fQGaZQfS`, deploy [HXAL…evABb](https://testnet.nearblocks.io/txns/HXALtS5eXQkFm5rqoGUcLYNhCVKwRTcwjM7LW5cevABb) (6 Nov) |
-| cpUSD (NEP-141, 6 decimals) | `cpusd.cpdemo.testnet` | code hash `EjXGxRYJk8nmQNHi6xs5MMJtrPgfSo6njWGA9bJbZG9N`, deploy [7Q82…mt27J](https://testnet.nearblocks.io/txns/7Q82hhbrqUeq2pb15j8sD3N1rvHBCuBUA98aj11mt27J) (6 Nov) |
-| Council (Sputnik v2) | `checkpoint-council.sputnik-v2.testnet` | _create tx_ |
-| Guardian | `guardian.cpdemo.testnet` | `get_policy().guardian` |
-| Guard public key | `CAR74z4PpMpNAmCnmaRY3dPrjFUSMrswynTah4oSsBrY`, version 1 | `get_policy().guard_pubkey` |
-| Rules hash | `89e1b151b955375cf1ae7b5af890d0212ad6284e21dc280bc504090d63f9c23d` | `pnpm rules:hash` = `get_policy().rules_hash` |
+| Vault | `vault.cpdemo.testnet` · code hash `4GcxzNMdU3dVLw8H3w2sydZ8RcZG56uXsmC9fQGaZQfS` | deploy + `new` [HXALtS…](https://testnet.nearblocks.io/txns/HXALtS5eXQkFm5rqoGUcLYNhCVKwRTcwjM7LW5cevABb) · account [9QLFyp…](https://testnet.nearblocks.io/txns/9QLFypmFV9Tf1rRZYBssbNp2P9TJske2fBiQZz1zMJvK) |
+| cpUSD (NEP-141, 6 decimals) | `cpusd.cpdemo.testnet` · code hash `EjXGxRYJk8nmQNHi6xs5MMJtrPgfSo6njWGA9bJbZG9N` | deploy + `new` [7Q82hh…](https://testnet.nearblocks.io/txns/7Q82hhbrqUeq2pb15j8sD3N1rvHBCuBUA98aj11mt27J) · mint [7QNGNG…](https://testnet.nearblocks.io/txns/7QNGNGJ99YCEax3qUFwGNdDm911kdrxjKpzqbv9A1dmU) |
+| Council (Sputnik v2) | `checkpoint-council.sputnik-v2.testnet` | _not created yet; `get_policy().dao_id` is `cpdemo.testnet` until it is_ |
+| Guardian | `guardian.cpdemo.testnet` | `get_policy().guardian` ✓ |
+| Guard public key | `CAR74z4PpMpNAmCnmaRY3dPrjFUSMrswynTah4oSsBrY`, version 1 | `get_policy().guard_pubkey` ✓ |
+| Rules hash | `89e1b151b955375cf1ae7b5af890d0212ad6284e21dc280bc504090d63f9c23d` | `pnpm rules:hash` = `get_policy().rules_hash` ✓ |
+| Allowlist | vendor-01, 02, 03, 04, 06 · token cpUSD · 500 cpUSD per basket · 1,000 per day · 4 vendors | `get_policy()`; vendor-05 is absent (AT-04) |
+| vendor-06 not registered on cpUSD | `storage_balance_of(vendor-06)` = `null`; vendors 01–05 registered | sets up AT-10 |
+| Demo owner | `owner-demo.cpdemo.testnet` · 200 cpUSD available in the Vault, 800 in its wallet | deposit [4wUAUp…](https://testnet.nearblocks.io/txns/4wUAUpvQJYNudJ8kBqzVg3Ar1QirvQpLGBDo4A1p1ZfN) |
+| Settlement agent | `agent.cpdemo.testnet` | `set_agent` [9B9ufj…](https://testnet.nearblocks.io/txns/9B9ufjwp3Q7SpzPzJ77cbXUbtPrGUv3x4UhMT4GwEdcR) · `get_owner_state().agents` ✓ |
 | Offer snapshot | `data/snapshot/` frozen 5 Nov 2026 | `pnpm snapshot:check` clean |
 
 ## Acceptance tests

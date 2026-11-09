@@ -30,6 +30,7 @@ import catalogJson from "../../../../../data/snapshot/catalog.json";
 import fixturesJson from "../../../../../data/snapshot/fixtures/adversarial.json";
 import offersJson from "../../../../../data/snapshot/offers.json";
 import { config } from "../config";
+import { dryQuote } from "../intents";
 import { assessBasket, assessOffers, parseDeterministic, planBasket, templateBasket, templateVerdict } from "./engine";
 import type { AgentsClient, RequestSummary } from "./types";
 
@@ -339,6 +340,9 @@ export const mockClient: AgentsClient = {
     const b = bundles()[basketId];
     if (!b) throw new Error(`No evidence bundle for basket ${basketId} in this browser.`);
     return b;
+  },
+  async intentsQuote(_id, total) {
+    return dryQuote(total);
   },
   async guardPubkey() {
     return toBase58(KEY.publicKey);

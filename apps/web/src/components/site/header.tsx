@@ -49,10 +49,14 @@ export function Header() {
           <WalletButton />
         </div>
       </nav>
-      <ul className="mt-2 flex justify-center gap-1 md:hidden">
+      <ul className="glass mx-auto mt-2 flex w-fit justify-center gap-0.5 rounded-full p-1 md:hidden">
         {LINKS.map(({ href, label }) => (
           <li key={href}>
-            <Link href={href} className={`rounded-full px-3 py-1 text-xs ${path.startsWith(href) ? "glass text-fg" : "text-muted"}`}>
+            <Link
+              href={href}
+              aria-current={path.startsWith(href) ? "page" : undefined}
+              className={`block rounded-full px-3 py-1 text-xs ${path.startsWith(href) ? "bg-[color-mix(in_srgb,var(--color-fg)_8%,transparent)] text-fg" : "text-muted"}`}
+            >
               {label}
             </Link>
           </li>

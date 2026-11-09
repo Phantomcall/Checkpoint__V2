@@ -1,7 +1,7 @@
 import { Check, CircleDashed, Loader2, X } from "lucide-react";
 import type { DeskView, LaneKey } from "@/lib/agents/reducer";
 
-const LANES: { key: LaneKey; name: string; who: string }[] = [
+export const LANES: { key: LaneKey; name: string; who: string }[] = [
   { key: "research", name: "Research", who: "Research agent" },
   { key: "guard", name: "Guard", who: "Rules engine" },
   { key: "coordinator", name: "Coordinator", who: "Basket planner" },

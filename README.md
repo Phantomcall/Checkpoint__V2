@@ -12,6 +12,17 @@ A team of AI agents can research, compare and buy things for you, and pay for th
 
 > [!IMPORTANT]
 > **Status: in active development (5 → 14 November 2026).** This README describes the target design for the hackathon MVP, as specified in our [PRD v2](docs/planning/Checkpoint-PRD-v2.pdf). Sections marked **🚧 planned** describe things that are not built yet. The [Roadmap](#16-roadmap) shows what is done. We update this file as each part lands, so the README always matches what actually runs.
+>
+> **Runs today (6 Nov):** Guard's rules engine and signer, the agents service, the shared payload and evidence code with 149 tests, and the web app (Desk, Audit, Governance, Vault). With no keys and no chain: `pnpm mock` plus the web app run the whole loop against a stand-in Vault ([Getting started](#15-getting-started)). **On testnet since 6 Nov:** the Vault (`vault.cpdemo.testnet`) and cpUSD (`cpusd.cpdemo.testnet`), with the rules hash pinned and 200 cpUSD deposited for the demo owner; their source isn't in this repo yet. **Not built yet:** the council DAO on testnet (until then the Vault's DAO account is a stand-in), the attack scripts and `pnpm demo:sandbox`.
+
+| | |
+|---|---|
+| [![The Desk: offers with Guard verdicts and the rule behind each](docs/img/desk-verdicts.png)](docs/img/desk-verdicts.png) | [![The basket card: five checks recomputed in the browser](docs/img/basket-verified.png)](docs/img/basket-verified.png) |
+| **Desk.** Offers for each item, priced against the median, with Guard's verdict and the rule behind it. Listing text is shown as data, never read as instructions. | **Basket card.** The exact basket Guard signed, decoded and re-hashed in your browser before you approve it. |
+| [![The Audit page: a settled basket verified in the browser](docs/img/audit-verified.png)](docs/img/audit-verified.png) | [![The Vault page reading the deployed testnet contract](docs/img/vault-testnet.png)](docs/img/vault-testnet.png) |
+| **Audit.** Every approved basket with its payouts, and the evidence and signature checks rerun in your browser. | **Vault on testnet.** The demo owner's balance, caps and allowlist, read from `vault.cpdemo.testnet`. |
+
+<sub>Desk, basket and Audit: the in-browser agents over the real captured offers, with the stand-in wallet (6 Nov). Vault: live testnet.</sub>
 
 ---
 
@@ -34,8 +45,10 @@ A team of AI agents can research, compare and buy things for you, and pay for th
 15. [Getting started](#15-getting-started)
 16. [Roadmap](#16-roadmap)
 17. [Limitations and honest claims](#17-limitations-and-honest-claims)
-18. [Team](#18-team)
-19. [Project documents](#19-project-documents)
+18. [AI tools disclosure](#18-ai-tools-disclosure)
+19. [Team](#19-team)
+20. [Project documents](#20-project-documents)
+21. [Licence](#21-licence)
 
 ---
 
@@ -72,7 +85,7 @@ A **Sputnik DAO** owns the rules: caps, allowlists, the Guard key and the rules 
 **Demo storyline (Procurement Desk):**
 
 > *"2× VPS 2 vCPU / 4 GB for 1 month, 1× .com domain for 1 year, 1 TB object storage."*
-> Research Agent collects real offers with sources and timestamps → Guard blocks an overpriced offer and an unlisted vendor, and flags an unusually cheap one for review → Coordinator builds the cheapest allowed basket → the owner approves the exact hash in their wallet → the Settlement Agent submits it → the Vault pays the vendors → a vendor whose transfer fails is restored safely → a stolen agent key fails to pay itself.
+> Research Agent collects real offers with sources and timestamps → Guard blocks an overpriced offer and an unlisted vendor, and flags an unusually cheap one for review → Coordinator builds the cheapest allowed basket → the owner approves the exact hash in their wallet → the Settlement Agent submits it → the Vault pays the vendors → the amount for a vendor whose transfer fails goes back to the owner's balance, exactly once → a stolen agent key fails to pay itself.
 
 ---
 
@@ -106,7 +119,7 @@ A **Sputnik DAO** owns the rules: caps, allowlists, the Guard key and the rules 
 | `cpUSD` | Our own NEP-141 test token (6 decimals, no value) standing in for a USD stablecoin |
 | Vendor accounts `vendor-01…06` | Testnet accounts controlled by the team, each standing in for a real seller's offer |
 | Offers | Real public prices captured into a snapshot, not a live checkout |
-| Intents panel (stretch) | A mainnet **dry** quote showing what cross-chain settlement would cost. No funds move. |
+| Intents panel | On the request page: a mainnet **dry** 1Click quote for paying the basket total from wNEAR. Advisory; nothing is signed or moved, and Guard and the Vault never see it. |
 
 ---
 
@@ -642,7 +655,7 @@ All maths uses integers: micro-USD prices and ratios in **basis points** (`r = f
 | ID | Rule | Condition (default config) | Verdict |
 |---|---|---|---|
 | R-01 | DATA_INVALID | Missing seller, URL, timestamp or price; non-USD; quantity ≤ 0 | 🟥 BLOCK |
-| R-02 | STALE | Captured more than 168 h ago | 🟧 REVIEW |
+| R-02 | STALE | Captured more than `max_age_hours` ago (720 h, so the 5 Nov snapshot stays fresh through judging) | 🟧 REVIEW |
 | R-03 | INSUFFICIENT_DATA | Fewer than 3 valid offers for the item | 🟧 REVIEW |
 | R-04 | VENDOR_NOT_ALLOWED | Vendor not on the Vault allowlist (read live) | 🟥 BLOCK |
 | R-05 | PRICE_POOR | `r > 12 000` (more than 120% of median) | 🟥 BLOCK |
@@ -657,7 +670,14 @@ All maths uses integers: micro-USD prices and ratios in **basis points** (`r = f
 | R-23 | TOKEN_OR_BALANCE | Token not allowlisted, or insufficient available balance | 🟥 BLOCK |
 | R-24 | REVIEW_NOT_ACKNOWLEDGED | A REVIEW line the owner hasn't acknowledged | 🟥 BLOCK |
 
-The rules config is hashed (`rules_hash`) and pinned in the Vault, so changing a threshold takes a DAO vote. The LLM can explain a verdict but never sets one.
+The rules config ([`config/rules.config.json`](config/rules.config.json)) is hashed (`rules_hash`) and pinned in the Vault, so changing a threshold takes a DAO vote. The LLM can explain a verdict but never sets one.
+
+See every verdict for the captured snapshot yourself:
+
+```bash
+pnpm guard assess --snapshot data/snapshot     # table: offer, item, vendor, unit price, % of median, verdict, rules
+pnpm rules:hash                                # rules_hash 89e1b151b955375cf1ae7b5af890d0212ad6284e21dc280bc504090d63f9c23d
+```
 
 ---
 
@@ -738,7 +758,7 @@ hash      = sha256(DOMAIN ‖ borsh(payload))     → approved on-chain by the o
 signature = ed25519(guard_key, hash)            → verified on-chain with env::ed25519_verify
 ```
 
-A shared test vector (`packages/shared/vectors/basket-v1.json`, 🚧 planned) is asserted by both the Rust and TS test suites.
+A shared test vector ([`packages/shared/vectors/basket-v1.json`](packages/shared/vectors/README.md)) pins the exact bytes and hash. The TypeScript tests assert it today (`pnpm test`, and CI checks the file is up to date with `pnpm vector:gen`); the Rust tests assert the same file once the Vault lands (🚧 planned).
 
 ---
 
@@ -750,63 +770,125 @@ A shared test vector (`packages/shared/vectors/basket-v1.json`, 🚧 planned) is
 | Contract tests | `near-workspaces` (Rust 0.24, JS 5.0) local sandbox |
 | Token | NEP-141 `cpUSD` test token (6 decimals) |
 | Governance | Sputnik DAO v2 (`sputnik-v2.testnet` factory) |
-| Services | Node 22 · TypeScript 5 · Hono · zod · better-sqlite3 · Server-Sent Events |
+| Services | Node ≥ 22.13 · TypeScript 5.9 · Hono · zod 4 · `node:sqlite` (built in, nothing to compile) · Server-Sent Events |
 | Crypto | `borsh` · `@noble/hashes` (sha256) · `@noble/ed25519` |
 | Chain access | `near-api-js` 7.4 · `near-cli-rs` 0.30 |
-| LLM (optional) | Anthropic API (`@anthropic-ai/sdk`) with schema-validated structured output. A deterministic fallback runs with `LLM_PROVIDER=none`. |
-| Web app | Next.js (App Router) · Tailwind · Radix UI · `@hot-labs/near-connect` (Meteor / Intear / Nightly on testnet) |
-| Tooling | pnpm workspaces · vitest · gitleaks · GitHub Actions |
+| LLM (optional) | Groq API (`groq-sdk`, model `openai/gpt-oss-120b`) with strict, schema-validated structured output, for list parsing and explanations only. Without a key, or with `LLM_PROVIDER=none`, a deterministic parser and template text are used; the demo and CI need no key. |
+| Web app | Next.js 16 (App Router) · React 19 · Tailwind 4 · Radix UI · `@hot-labs/near-connect` (Meteor / Intear / Nightly on testnet) · WebGL2 hero with an SVG fallback |
+| Tooling | pnpm 9 workspaces · vitest · ESLint · Prettier · gitleaks (pre-commit and CI) · GitHub Actions |
 
 ---
 
 ## 14. Repository layout
 
-🚧 planned. The layout fills in as each milestone lands.
-
 ```text
-checkpoint/
-├─ contracts/vault/        Rust Vault contract + near-workspaces tests
-├─ contracts/cpusd/        NEP-141 test token (sandbox-only fault switches for tests)
-├─ packages/shared/        Zod schemas, Borsh payload, hashing, rules config, test vectors
-├─ packages/guard/         Rules engine (pure), signer, HTTP API, CLI
-├─ packages/agents/        Orchestrator, research, coordinator, settlement, SSE, evidence store
-├─ apps/web/               Next.js app: Vault, Desk, Audit, Governance
-├─ scripts/                setup-testnet, demo-sandbox, dao-propose, verify-audit, attacks/
-├─ data/snapshot/          catalog.json, offers.json, sources.md, screens/, fixtures/
-├─ deployments/            testnet.json (account IDs, code hashes, deploy tx hashes)
-└─ docs/                   architecture, api, permissions, evidence, limitations, demo script
+Checkpoint__V2/
+├─ packages/shared/        Zod schemas, Borsh payload + hash, evidence hash, verify, Vault view shapes, test vector
+├─ packages/guard/         Rules engine (pure), ed25519 signer, HTTP API (:8787), CLI (pnpm guard)
+├─ packages/agents/        Orchestrator, parser, coordinator, explanations, SSE API (:8788), `pnpm mock`
+├─ apps/web/               Next.js app: landing, Desk, Vault, Audit, Governance
+├─ scripts/                verify-audit (pnpm verify:audit), llm-check
+├─ config/                 rules.config.json (hashed into rules_hash)
+├─ data/snapshot/          real offers: catalog.json, offers.json, sources.md, screens/, fixtures/
+├─ data/fixtures/          synthetic dev snapshot used by `pnpm mock` and the tests
+├─ docs/                   api, architecture, decisions, demo script, evidence, wallet, img/, planning PDFs
+├─ contracts/vault/        🚧 source to come: Rust Vault contract + near-workspaces tests (deployed on testnet)
+├─ contracts/cpusd/        🚧 source to come: NEP-141 test token (deployed on testnet)
+├─ scripts/attacks/        🚧 planned: stolen-key, over-cap and edited-basket attacks
+├─ deployments/            🚧 planned: testnet.json (until then: docs/evidence.md#deployed-on-testnet)
+└─ LICENSE                 MIT
 ```
 
 ---
 
 ## 15. Getting started
 
-> 🚧 **Planned commands.** These are the target developer experience. They will work once the matching milestones in the [Roadmap](#16-roadmap) are ticked.
-
-**Run the whole thing locally without any keys (sandbox):**
+Prerequisites: **Node ≥ 22.13** and **pnpm 9** (`corepack enable` picks the pinned version). Nothing else is needed for the keyless paths below: no NEAR account, no wallet, no API key.
 
 ```bash
 git clone https://github.com/Phantomcall/Checkpoint__V2.git && cd Checkpoint__V2
+corepack enable
 pnpm install
+```
+
+### A. The whole loop in the browser, with no keys (works today)
+
+Two terminals:
+
+```bash
+MOCK_AUTO_APPROVE_MS=0 pnpm mock      # 1: agents API on :8788, Guard in-process, a stand-in Vault and chain
+pnpm --filter web dev                 # 2: web app on http://localhost:3000
+```
+
+Open <http://localhost:3000/desk>, click **Use the demo list**, then **Start research**. Within a few seconds you should see:
+
+1. The agent timeline filling in, and offers grouped by item, each with its price as a percentage of the median, a verdict and the rule behind it. Overpriced offers (R-05), an unlisted vendor (R-04), a duplicate (R-09) and an under-spec server (R-10) are **Block**; unusually cheap or slightly expensive offers are **Review**. Review offers have an **"I reviewed this"** button: clicking it re-plans the basket and Guard signs again.
+2. The basket card with the hash, and five green checks computed in your browser: *Hash recomputed in your browser matches · Decoded payouts and total match the basket shown · Evidence hash is bound into the payload · Basket is made out to you · Guard's signature verifies*.
+3. **Approve exact basket · stand-in wallet.** Click it. The payouts settle and the request ends **Partially paid**: vendor-06 can't receive the token, so its amount is returned to the owner's balance.
+4. <http://localhost:3000/audit> lists the basket as **verified**, with each check and a copyable basket ID.
+
+`pnpm mock` runs the real Guard and agents code over a small synthetic snapshot (`data/fixtures/dev-snapshot`), and its signing key is a published dev key. Without `MOCK_AUTO_APPROVE_MS=0` it approves by itself after 4 s.
+
+To run the same pipeline over the **real captured offers** with no service at all, use the in-browser agents (the same parser, rules and Coordinator code, running in the page):
+
+```bash
+cp apps/web/.env.example apps/web/.env.local     # NEXT_PUBLIC_USE_MOCK=1
+pnpm --filter web dev
+```
+
+The demo list then gives the basket from [`data/snapshot/sources.md`](data/snapshot/sources.md): **81.66 cpUSD** across vendor-02, vendor-03 and vendor-06.
+
+### B. The agents API from a terminal (works today)
+
+```bash
+pnpm mock
+```
+
+```bash
+curl -s -XPOST localhost:8788/v1/requests -H 'content-type: application/json' \
+  -d '{"owner_id":"owner-demo.cpdemo.testnet","text":"2x VPS, 1 .com domain, 1 TB object storage"}'
+curl -N localhost:8788/v1/requests/<request_id>/events     # live agent timeline (SSE)
+```
+
+Within about 10 s the stream shows offers, verdicts, a basket, Guard's signature, the stand-in approval and payouts, ending with `settlement.final` `PartiallyPaid`. Every endpoint and event is documented in [`docs/api.md`](docs/api.md).
+
+### C. Check the rules, the tests and a basket (works today)
+
+```bash
+pnpm test                                    # 149 tests: rule boundaries, payload vector, coordinator, pipeline, verify
+pnpm guard assess --snapshot data/snapshot   # every verdict for the real captured offers
+pnpm rules:hash                              # the hash the Vault will pin
+pnpm snapshot:check                          # validates the offer snapshot (0 errors)
+pnpm verify:audit <basket_id> --pubkey Hmw3vdWrTE3s52kui8XC4eLgucRtAH6ECHz6NKVYwg57
+```
+
+`verify:audit` fetches the evidence bundle from the agents service and recomputes the evidence hash and the basket hash, then checks Guard's signature (the key above is the published dev key `pnpm mock` signs with). It prints PASS or FAIL per check. On testnet, `--rpc <url> --vault vault.cpdemo.testnet` reads the key from the Vault and also compares the result with `get_basket`.
+
+### D. Read the deployed contracts (works today)
+
+The Vault and cpUSD are on testnet. Anyone can read them, with no wallet:
+
+```bash
+pnpm rules:hash      # prints rules_hash 89e1b151…c23d
+curl -s https://rpc.testnet.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"vault.cpdemo.testnet","method_name":"get_policy","args_base64":"e30="}}' \
+  | node -e 'process.stdin.on("data",d=>console.log(Buffer.from(JSON.parse(d).result.result).toString()))'
+```
+
+The policy lists the allowlisted vendors (vendor-05 is not one), the caps, the Guard key and a `rules_hash` equal to the one `pnpm rules:hash` prints. In the web app, <http://localhost:3000/vault?view=owner-demo.cpdemo.testnet> shows the demo owner's balances, limits and agent, read-only.
+
+### E. Sandbox and full testnet run (🚧 planned)
+
+These need the contract source and the setup scripts, which are not in the repo yet:
+
+```bash
 pnpm demo:sandbox          # local NEAR sandbox: deploy → request → approve → pay → 3 attacks → PASS table
-```
-
-**Run the tests:**
-
-```bash
 cargo test -p vault        # contract unit + near-workspaces integration tests
-pnpm test                  # rules engine, coordinator, payload vectors
+cp .env.example .env       # RPC URL, account IDs, Guard key, agent function-call key
+pnpm setup:testnet         # accounts, cpUSD, Vault, registrations, agent key
+pnpm dev:services          # Guard :8787 · agents :8788, then pnpm --filter web dev
 ```
 
-**Run on NEAR testnet:**
-
-```bash
-cp .env.example .env       # fill in RPC URL, account IDs, Guard key, agent function-call key
-pnpm setup:testnet         # idempotent: accounts, cpUSD, Vault, registrations, agent key
-pnpm dev                   # Guard :8787 · agents :8788 · web :3000
-```
-
-Prerequisites: Rust stable + `wasm32-unknown-unknown`, `cargo-near`, Node 22, pnpm 9, and a testnet wallet (Meteor, Intear or Nightly) for the web app.
+They will also need Rust stable with `wasm32-unknown-unknown`, `cargo-near`, and a testnet wallet (Meteor, Intear or Nightly).
 
 ---
 
@@ -814,14 +896,28 @@ Prerequisites: Rust stable + `wasm32-unknown-unknown`, `cargo-near`, Node 22, pn
 
 Hackathon window: **1–14 Nov 2026** · our submission target: **14 Nov, 12:00 UTC**
 
-- [ ] **Day 0 · 5 Nov:** interfaces frozen, testnet accounts, cpUSD deployed, Sputnik DAO created, payload test vector, offer snapshot v0, repo scaffold
-- [ ] **Days 1–3 · 6–8 Nov:** Vault (deposits, approvals, `execute_basket`, payouts and callbacks), Guard (rules + signer), agents (research, coordinator, settlement), web skeleton
-- [ ] **Day 4 · 9 Nov · Gate:** on testnet, list → verdicts → basket → wallet approval → vendors paid, plus edited-basket rejection and failed-vendor restore
-- [ ] **Days 5–6 · 10–11 Nov:** DAO hand-over and a real vote, attack scripts, reconciliation, explanations, web app complete, keyless sandbox demo
-- [ ] **Day 7 · 12 Nov · Freeze:** final deploy, cold README run, evidence table
-- [ ] **Days 8–9 · 13–14 Nov:** demo video, X post, submission
+**Done**
 
-Stretch (only after the gate): vendor agents bidding for baskets, a NEAR Intents mainnet dry-quote panel, a governance risk preview.
+- [x] Interfaces frozen in the PRD, Borsh payload and shared test vector (`packages/shared`)
+- [x] Offer snapshot: 18 real listings with sources and capture times, plus 7 labelled adversarial fixtures (`pnpm snapshot:check` clean, frozen 5 Nov)
+- [x] Guard: rules R-01–R-10 and R-20–R-24, ed25519 signer, HTTP API, CLI, fail-closed on Vault errors
+- [x] Agents: deterministic parser (optional Groq LLM), coordinator, orchestrator with SSE, evidence bundles, `pnpm mock`
+- [x] `pnpm verify:audit` and the in-browser verification it shares with the web app
+- [x] Web app: landing, Desk (request → live timeline → verdicts → acknowledge → basket → approve), Audit, Governance, Vault, all reading through the shared schemas
+- [x] CI: typecheck, lint, tests, vector check, snapshot check, gitleaks
+
+**To do**
+
+- [x] Vault and cpUSD deployed on testnet, demo owner funded and its settlement agent set (6 Nov; [deploy transactions](docs/evidence.md#deployed-on-testnet))
+- [ ] Vault and cpUSD source in this repo, with near-workspaces tests
+- [ ] Sputnik council DAO on testnet and a real vote on a limit
+- [ ] **Gate · Mon 9 Nov:** on testnet, list → verdicts → basket → wallet approval → vendors paid, plus edited-basket rejection and failed-vendor restore
+- [ ] Attack scripts (stolen key, edited basket, replay, over-cap) with transaction hashes in [`docs/evidence.md`](docs/evidence.md)
+- [ ] `pnpm demo:sandbox`: the keyless loop on a local NEAR sandbox
+- [ ] **Freeze · Wed 12 Nov:** final deploy, cold README run, evidence table, hosted web app
+- [ ] Demo video ([shot list](docs/demo-script.md)), X post, submission by **Sat 14 Nov, 12:00 UTC**
+
+Stretch (only after the gate): vendor agents bidding for baskets and a governance risk preview. The NEAR Intents mainnet dry-quote panel is built: the request page shows it, labelled advisory.
 
 ---
 
@@ -837,7 +933,23 @@ Stretch (only after the gate): vendor agents bidding for baskets, a NEAR Intents
 
 ---
 
-## 18. Team
+## 18. AI tools disclosure
+
+**In the product.** The agents service can call an LLM (Groq, `openai/gpt-oss-120b`) for two jobs only: turning a shopping list into catalogue items, and writing plain-English explanations of verdicts. Its output is checked against a strict schema, it never sees a key, and it doesn't pick offers, vendors, amounts or verdicts: the Guard rules and the Vault do. Without a key, or with `LLM_PROVIDER=none` (as in `pnpm mock`, the in-browser agents and CI), a deterministic parser and template text do both jobs. The timeline shows which parser read the list, and an LLM explanation is shown only with an "advisory" label.
+
+**In building it.** 🚧 To be completed by each team member before the freeze (12 Nov): which AI assistants were used, and for what.
+
+| Member | Tools | Used for |
+|---|---|---|
+| Isaac | _to fill_ | _to fill_ |
+| David | _to fill_ | _to fill_ |
+| Patrick | _to fill_ | _to fill_ |
+
+Every change was reviewed and merged by a team member, and the tests and on-chain evidence are what the claims rest on, not the tools that helped write the code.
+
+---
+
+## 19. Team
 
 | | Focus |
 |---|---|
@@ -849,12 +961,24 @@ Built for the **NEAR Hackathon 2026** (1–14 November).
 
 ---
 
-## 19. Project documents
+## 20. Project documents
 
 | Document | Contents |
 |---|---|
 | [Project decision](docs/planning/NEAR-Project-Decision.pdf) | Why Checkpoint and Agent Procurement Desk were merged into one submission, checked against the live hackathon rules |
 | [PRD v2.0](docs/planning/Checkpoint-PRD-v2.pdf) | Full product spec: requirements, Guard rules, data model, **frozen interfaces**, invariants, threat model, test plan, demo script |
 | [Task list](docs/planning/Checkpoint-Task-List.pdf) | 74 day-by-day tasks for the team, with tools, recommended approach, alternatives, "done when" tests and handoffs |
+| [API](docs/api.md) | Guard and agents HTTP contracts, SSE events with examples, the evidence bundle, the mock server |
+| [Architecture](docs/architecture.md) | How the off-chain code maps to the PRD, and where each guarantee is enforced and tested |
+| [Decisions pending](docs/decisions-pending.md) | Where the code departs from or adds to PRD v2, awaiting team agreement |
+| [Demo script](docs/demo-script.md) | The 4:00 video as a shot list |
+| [Evidence](docs/evidence.md) | One row per acceptance test, with commands and transaction links (filled from the gate on) |
+| [Offer snapshot sources](data/snapshot/sources.md) | Where each price came from, the verdicts Guard gives it, and the expected demo basket |
 
 Index and editable sources: [`docs/`](docs/README.md).
+
+---
+
+## 21. Licence
+
+[MIT](LICENSE). The offer snapshot quotes public list prices with their sources; the vendor accounts are stand-ins and nothing is bought from the sellers named.

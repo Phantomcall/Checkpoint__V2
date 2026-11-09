@@ -4,6 +4,7 @@
  * instead of the demo. Only the client interface below is web-specific.
  */
 import type { AgentEvent, CatalogItem, CreateRequest, RequestState, RequestView } from "@checkpoint/shared";
+import type { IntentsQuoteResponse } from "../intents";
 
 export type {
   AgentEvent,
@@ -46,6 +47,11 @@ export interface AgentsClient {
   acknowledge(id: string, offerIds: string[]): Promise<void>;
   cancel(id: string): Promise<void>;
   audit(basketId: string): Promise<unknown>;
+  /**
+   * A dry NEAR Intents 1Click quote for the basket total (D-6.2): what it would cost from wNEAR. Advisory only.
+   * Null when the service has quotes switched off.
+   */
+  intentsQuote(requestId: string, basketTotal: string): Promise<IntentsQuoteResponse | null>;
   /** Guard's ed25519 public key (base58), so the browser can check the signature too. Null when unknown. */
   guardPubkey(): Promise<string | null>;
   /**

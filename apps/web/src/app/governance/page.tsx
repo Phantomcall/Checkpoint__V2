@@ -83,7 +83,7 @@ export default function GovernancePage() {
 
   return (
     <>
-      <PageHeader eyebrow="Governance" title="The council owns the policy" intro="Caps, vendor and token allowlists, Guard keys and the rules hash change only through a proposal and a vote. The guardian can only pause.">
+      <PageHeader eyebrow="Governance" title="The council owns the policy" accent="council" locks={["vault"]} intro="Caps, vendor and token allowlists, Guard keys and the rules hash change only through a proposal and a vote. The guardian can only pause.">
         <TrustLabel kind="onchain" />
         <button onClick={() => void refresh()} className="key key-ghost h-8 px-3 text-xs">
           <RefreshCw aria-hidden className={`size-3.5 ${policy.state === "loading" ? "animate-spin" : ""}`} /> Refresh
@@ -109,6 +109,33 @@ export default function GovernancePage() {
         <ProposalsPanel s={council} policy={policy.state === "ok" ? policy.data : null} me={accountId} busy={busy} onVote={vote} onSignIn={signIn} />
       </div>
     </>
+  );
+}
+
+/** How a policy change travels, shown while there are no proposals to list. */
+const FLOW: { title: string; body: string }[] = [
+  { title: "A member proposes", body: "A FunctionCall proposal on the council: set_limits, an allowlist change or a new Guard key." },
+  { title: "The council votes", body: "Sputnik counts approvals until the threshold passes or the proposal period ends." },
+  { title: "The DAO calls the Vault", body: "Only the DAO account can change the policy. A proposal outside the Vault's bounds fails here." },
+  { title: "The policy version moves", body: "Baskets signed under the old version stop with ERR_POLICY_VERSION, so nothing slips through mid-change." },
+];
+
+function PolicyFlow() {
+  return (
+    <div className="mx-auto mt-2 max-w-xl border-t border-line pt-6">
+      <p className="eyebrow">How a policy change works</p>
+      <ol className="mt-4 grid gap-3 sm:grid-cols-2">
+        {FLOW.map(({ title, body }, i) => (
+          <li key={title} className="rounded-2xl p-4 ring-1 ring-inset ring-line">
+            <span className="flex items-center gap-2 text-[13.5px] font-medium text-fg">
+              <span className="grid size-6 place-items-center rounded-full font-mono text-[10px] text-accent ring-1 ring-inset ring-accent/40 tabular">{i + 1}</span>
+              {title}
+            </span>
+            <span className="mt-2 block text-xs leading-relaxed text-muted">{body}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -282,9 +309,12 @@ function ProposalsPanel({
           ))}
         </div>
       ) : s.state === "missing" ? (
-        <Missing Icon={Gavel} title="No council to show yet">
-          Proposals to change caps, vendors or the Guard key, and the council&apos;s votes on them, appear here once the DAO exists.
-        </Missing>
+        <>
+          <Missing Icon={Gavel} title="No council to show yet">
+            Proposals to change caps, vendors or the Guard key, and the council&apos;s votes on them, appear here once the DAO exists.
+          </Missing>
+          <PolicyFlow />
+        </>
       ) : s.state === "error" ? (
         <p role="alert" className="mt-4 text-[13px] text-bad">
           Couldn&apos;t read proposals: {s.error}

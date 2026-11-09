@@ -4,6 +4,7 @@ import { ArrowRight, CornerDownLeft, FlaskConical, Inbox, Loader2, Sparkles, X }
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { LANES } from "@/components/desk/timeline";
 import { PageHeader } from "@/components/page-header";
 import { agents } from "@/lib/agents/client";
 import type { CatalogItem, RequestSummary } from "@/lib/agents/types";
@@ -15,6 +16,15 @@ import { useWallet } from "@/lib/wallet";
 const EXAMPLE = "2× VPS 2 vCPU / 4 GB for 1 month\n1× .com domain for 1 year\n1 TB object storage for 1 month\n10k transactional emails";
 const VENDORS = ["vendor-01", "vendor-02", "vendor-03", "vendor-04", "vendor-06"];
 const DEMO_OWNER = "owner-demo.cpdemo.testnet";
+
+/** What each lane of the request timeline does, for the empty state. */
+const NEXT: Record<(typeof LANES)[number]["key"], string> = {
+  research: "Matches each line to the catalogue and collects every offer in the snapshot.",
+  guard: "Checks each price against the market median, then signs the final basket.",
+  coordinator: "Builds the cheapest basket from the offers Guard allowed, within the vendor limit.",
+  approval: "You approve the exact basket hash from your wallet.",
+  settlement: "The Vault checks your caps, then pays each vendor in cpUSD.",
+};
 
 export default function DeskPage() {
   const router = useRouter();
@@ -77,7 +87,7 @@ export default function DeskPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Procurement desk" title="What do you need?" intro="Write it the way you'd brief a colleague. Agents match each line to the catalogue, research every offer in the snapshot, and Guard checks the prices before you see a basket.">
+      <PageHeader eyebrow="Procurement desk" title="What do you need?" accent="need" locks={["guard"]} intro="Write it the way you'd brief a colleague. Agents match each line to the catalogue, research every offer in the snapshot, and Guard checks the prices before you see a basket.">
         {agents.mode === "mock" && (
           <span className="flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10.5px] tracking-[0.12em] text-info uppercase ring-1 ring-inset ring-info/30">
             <FlaskConical aria-hidden className="size-3.5" /> Mock agents
@@ -198,14 +208,33 @@ export default function DeskPage() {
               ))}
             </ul>
           ) : past.length === 0 ? (
-            <div className="flex flex-col items-center py-14 text-center">
-              <span className="grid size-12 place-items-center rounded-2xl bg-[color-mix(in_srgb,var(--color-fg)_6%,transparent)] text-muted">
-                <Inbox aria-hidden className="size-5" />
-              </span>
-              <p className="mt-3 text-sm text-fg">No requests yet</p>
-              <p className="mt-1 max-w-56 text-xs text-muted">
-                Requests for <span className="font-mono">{owner}</span> show up here.
-              </p>
+            <div className="mt-4">
+              <div className="flex items-center gap-3 rounded-2xl px-3 py-3 ring-1 ring-inset ring-line">
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-fg)_6%,transparent)] text-muted">
+                  <Inbox aria-hidden className="size-4" />
+                </span>
+                <p className="text-xs text-muted">
+                  <span className="block text-sm text-fg">No requests yet</span>
+                  Requests for <span className="font-mono">{owner}</span> show up here.
+                </p>
+              </div>
+              <p className="eyebrow mt-6">What happens next</p>
+              <ol className="relative mt-3 space-y-4">
+                <span aria-hidden className="absolute top-3 bottom-3 left-[11px] w-px bg-[linear-gradient(to_bottom,var(--color-accent),var(--color-line)_60%)] opacity-60" />
+                {LANES.map(({ key, name, who }, i) => (
+                  <li key={key} className="relative flex gap-3">
+                    <span className="relative z-10 grid size-6 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] font-mono text-[10px] text-muted ring-1 ring-inset ring-line-strong tabular">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex items-baseline gap-2 text-[13.5px] font-medium text-fg">
+                        {name} <span className="font-mono text-[10.5px] font-normal text-faint">{who}</span>
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-muted">{NEXT[key]}</span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
             </div>
           ) : (
             <ul className="mt-3 space-y-1.5">

@@ -9,6 +9,7 @@ import {
   utf8ToBytes,
 } from "@checkpoint/shared";
 import { config } from "../config";
+import type { IntentsQuoteResponse } from "../intents";
 import { vault } from "../near";
 import { mockClient } from "./mock";
 import type { AgentsClient, RequestSummary } from "./types";
@@ -77,6 +78,15 @@ const live: AgentsClient = {
   },
   async audit(basketId) {
     return call(`/v1/audit/${basketId}`);
+  },
+  async intentsQuote(id) {
+    try {
+      return await call<IntentsQuoteResponse>(`/v1/requests/${id}/intents-quote`);
+    } catch (e) {
+      // 501: the service runs with AGENTS_INTENTS=off; 404: a build from before D-6.2. Neither is an error here.
+      if ((e as { code?: string }).code === "NOT_ENABLED" || /answered 404/.test((e as Error).message)) return null;
+      throw e;
+    }
   },
   async guardPubkey() {
     if (await this.hasDevWallet()) return DEV_GUARD_PUBKEY;

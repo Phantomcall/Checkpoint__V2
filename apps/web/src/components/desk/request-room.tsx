@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowLeft, Check, CircleSlash, FlaskConical, ScanSearch, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useReducer, useState } from "react";
+import { HeaderRings, LockChips, type LockName } from "@/components/page-header";
 import { TrustLabel } from "@/components/trust-label";
 import { agents } from "@/lib/agents/client";
 import { canCancel, initialDesk, reduceDesk, stageOf, type Tone } from "@/lib/agents/reducer";
@@ -10,6 +11,7 @@ import { humanError } from "@/lib/errors";
 import { approveBasket } from "@/lib/tx";
 import { useWallet } from "@/lib/wallet";
 import { BasketCard } from "./basket-card";
+import { IntentsQuote } from "./intents-quote";
 import { OffersBoard } from "./offers-board";
 import { Timeline } from "./timeline";
 
@@ -64,6 +66,11 @@ export function RequestRoom({ id }: { id: string }) {
     }, !devWallet);
 
   const st = stageOf(view);
+  // The header dial lights each lock as the request passes it: Guard signs, you approve, the Vault pays.
+  const locks: LockName[] = [];
+  if (view.signed) locks.push("guard");
+  if (view.state === "executing" || view.state === "final") locks.push("you");
+  if (view.settlement.final_status && view.settlement.final_status !== "Failed") locks.push("vault");
   const firstLine = view.text.split("\n")[0] ?? "";
   const fatal = view.errors.filter((e) => !e.recoverable && e.code !== "CANCELLED");
   const notes = view.errors.filter((e) => e.recoverable);
@@ -73,13 +80,15 @@ export function RequestRoom({ id }: { id: string }) {
       <Link href="/desk" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-fg">
         <ArrowLeft aria-hidden className="size-4" /> Desk
       </Link>
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-4 pb-8">
+      <div className="relative isolate mt-4 flex flex-wrap items-end justify-between gap-4 pb-8">
+        <HeaderRings locks={locks} />
         <div className="min-w-0">
           <p className="eyebrow">Request · {id.slice(0, 8)}</p>
           <h1 className="mt-2 truncate text-3xl font-semibold text-fg sm:text-4xl">{view.items.length ? `${view.items.length} item${view.items.length > 1 ? "s" : ""}` : firstLine || "Loading…"}</h1>
           {view.text && <p className="mt-2 max-w-2xl truncate font-mono text-[12px] text-muted">{view.text.replace(/\n/g, " · ")}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <LockChips locks={locks} />
           {devWallet && (
             <span
               title={agents.mode === "mock" ? "The agents pipeline runs in this browser over the frozen snapshot" : "Connected to `pnpm mock`: the real agents service with a fake chain"}
@@ -195,7 +204,7 @@ export function RequestRoom({ id }: { id: string }) {
           )}
           {view.refusal && (
             <section role="alert" className="panel rounded-[var(--radius-card)] p-5 ring-1 ring-inset ring-bad/30">
-              <p className="eyebrow text-bad">Guard refused to sign</p>
+              <p className="eyebrow text-bad">{view.refusal.code === "GUARD_UNAVAILABLE" ? "Guard is unavailable" : "Guard refused to sign"}</p>
               <p className="mt-2 text-[13px] text-fg">{view.refusal.message}</p>
               <ul className="mt-2 space-y-1 text-[13px] text-bad">
                 {view.refusal.findings.map((f, i) => (
@@ -214,6 +223,7 @@ export function RequestRoom({ id }: { id: string }) {
               <TrustLabel kind="advisory" /> <span>{view.explanations.basket.text}</span>
             </p>
           )}
+          {view.basket && !["refused", "cancelled"].includes(view.state) && <IntentsQuote requestId={id} total={view.basket.total} />}
         </div>
       </div>
 

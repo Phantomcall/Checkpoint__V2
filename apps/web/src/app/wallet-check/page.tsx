@@ -31,7 +31,7 @@ export default function WalletCheckPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Day-1 check · P-0.3" title="Wallet check" intro="Day-1 check (P-0.3): sign in with a testnet wallet, then sign one FunctionCall that attaches a deposit." />
+      <PageHeader eyebrow="Day-1 check · P-0.3" title="Wallet check" accent="Wallet" locks={["you"]} intro="Day-1 check (P-0.3): sign in with a testnet wallet, then sign one FunctionCall that attaches a deposit." />
       <ol className="max-w-3xl space-y-4">
         <li className="panel rounded-[var(--radius-card)] p-6">
           <h2 className="font-semibold text-fg">1. Sign in on testnet</h2>

@@ -19,9 +19,9 @@ export function ProductWindow() {
       {/* window chrome */}
       <div className="flex items-center gap-3 border-b border-line px-4 py-3">
         <span className="flex gap-1.5">
-          <span className="size-2.5 rounded-full bg-[#ff5f57]/80" />
-          <span className="size-2.5 rounded-full bg-[#febc2e]/80" />
-          <span className="size-2.5 rounded-full bg-[#28c840]/80" />
+          <span className="size-2.5 rounded-full bg-[color-mix(in_srgb,var(--color-fg)_18%,transparent)]" />
+          <span className="size-2.5 rounded-full bg-[color-mix(in_srgb,var(--color-fg)_18%,transparent)]" />
+          <span className="size-2.5 rounded-full bg-[color-mix(in_srgb,var(--color-fg)_18%,transparent)]" />
         </span>
         <span className="mx-auto rounded-full border border-line px-3 py-0.5 font-mono text-[11px] text-faint">checkpoint / desk / 7c1e…a90b</span>
       </div>
