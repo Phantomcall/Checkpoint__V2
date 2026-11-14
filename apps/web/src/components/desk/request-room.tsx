@@ -9,6 +9,7 @@ import { agents } from "@/lib/agents/client";
 import { canCancel, initialDesk, reduceDesk, stageOf, type Tone } from "@/lib/agents/reducer";
 import { humanError } from "@/lib/errors";
 import { approveBasket } from "@/lib/tx";
+import { getAccountName, shortAccount } from "@/lib/account-names";
 import { useWallet } from "@/lib/wallet";
 import { BasketCard } from "./basket-card";
 import { IntentsQuote } from "./intents-quote";
@@ -16,6 +17,9 @@ import { OffersBoard } from "./offers-board";
 import { Timeline } from "./timeline";
 
 const TONE: Record<Tone, string> = { info: "text-info ring-info/30", warn: "text-warn ring-warn/30", ok: "text-ok ring-ok/30", bad: "text-bad ring-bad/30" };
+
+/** An account as people read it in a message: their own name for it, or the short id. */
+const who = (id: string) => getAccountName(id) ?? shortAccount(id);
 
 export function RequestRoom({ id }: { id: string }) {
   const [view, dispatch] = useReducer(reduceDesk, undefined, initialDesk);
@@ -60,7 +64,7 @@ export function RequestRoom({ id }: { id: string }) {
       if (!s || !view.owner_id) return;
       if (devWallet) return agents.devApprove(s.hash_hex, view.owner_id, s.expires_at_ms, id);
       if (!accountId) return void (await signIn());
-      if (accountId !== view.owner_id) throw new Error(`You're signed in as ${accountId}, but this basket is made out to ${view.owner_id}. Only the owner can approve it.`);
+      if (accountId !== view.owner_id) throw new Error(`You're signed in as ${who(accountId)}, but this basket is made out to ${who(view.owner_id)}. Only the owner can approve it.`);
       await send(approveBasket(s.hash_hex, String(s.expires_at_ms)));
       setToast({ tone: "ok", text: "Approval sent. The settlement agent picks it up within a few seconds." });
     }, !devWallet);

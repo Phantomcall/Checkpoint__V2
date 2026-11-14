@@ -10,7 +10,8 @@ import { formatAmount, parseAmount } from "@/lib/format";
 import { accountExists, ft, hasContract, pollView, vault, type VaultBalanceView, type VaultOwnerStateView, type VaultPolicyView } from "@/lib/near";
 import { utcDayIndex } from "@checkpoint/shared";
 import { deposit, isRegistered, setAgent, storageDeposit, storageMin, txHash, withdraw, type Tx } from "@/lib/tx";
-import { AccountLabel } from "@/components/site/account-label";
+import { AccountLabel, AccountName } from "@/components/site/account-label";
+import { getAccountName, shortAccount } from "@/lib/account-names";
 import { useWallet } from "@/lib/wallet";
 
 const AGENT = "agent.cpdemo.testnet";
@@ -155,7 +156,10 @@ export default function VaultPage() {
       {readOnly && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl px-4 py-3 text-[13px] text-muted ring-1 ring-inset ring-line">
           <span className="flex items-center gap-2">
-            <Eye aria-hidden className="size-4 text-accent" /> Read-only view of <span className="font-mono text-fg">{shown}</span>, straight from chain
+            <Eye aria-hidden className="size-4 shrink-0 text-accent" />
+            <span className="min-w-0">
+              Read-only view of <AccountName accountId={shown} />, straight from chain
+            </span>
           </span>
           <button onClick={() => signIn()} disabled={!ready} className="key key-primary h-8 px-3 text-xs">
             <Wallet aria-hidden className="size-3.5" /> Sign in for your own
@@ -167,7 +171,7 @@ export default function VaultPage() {
         <StateCard
           Icon={Wallet}
           title="Your wallet account isn't on testnet yet"
-          body={`${shown} is a new wallet address. It only exists once it has received some testnet NEAR, and it needs a little to register on cpUSD and sign. Fund it from a testnet faucet, then refresh. cpUSD itself is a test token the team issues; to see a Vault that is already set up, view the demo owner.`}
+          body={`${getAccountName(shown) ?? shortAccount(shown)} is a new wallet address. It only exists once it has received some testnet NEAR, and it needs a little to register on cpUSD and sign. Fund it from a testnet faucet, then refresh. cpUSD itself is a test token the team issues; to see a Vault that is already set up, view the demo owner.`}
         >
           <div className="flex flex-wrap gap-2">
             <a href="https://near-faucet.io/" target="_blank" rel="noreferrer" className="key key-secondary h-9 px-4 text-[13px]">
@@ -205,7 +209,7 @@ export default function VaultPage() {
                 <div>
                   <p className="text-sm font-medium text-fg">Deposits and withdrawals need the owner&apos;s wallet</p>
                   <p className="mt-1 text-[13px] text-muted">
-                    Only <span className="font-mono">{shown}</span> can move its cpUSD. {data.tokenLive && data.registered ? `Its wallet holds ${formatAmount(data.wallet)} outside the Vault.` : ""}
+                    Only <AccountName accountId={shown} /> can move its cpUSD. {data.tokenLive && data.registered ? `Its wallet holds ${formatAmount(data.wallet)} outside the Vault.` : ""}
                   </p>
                   {data.policy && <Enforced policy={data.policy} />}
                 </div>

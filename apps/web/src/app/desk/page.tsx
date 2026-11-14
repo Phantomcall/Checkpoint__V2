@@ -12,7 +12,7 @@ import { formatAmount } from "@/lib/format";
 import { humanError } from "@/lib/errors";
 import { parseAmount } from "@/lib/format";
 import { servicesReady, useServices, wakeServices } from "@/lib/services";
-import { AccountLabel } from "@/components/site/account-label";
+import { AccountLabel, AccountName } from "@/components/site/account-label";
 import { useWallet } from "@/lib/wallet";
 
 const EXAMPLE = "2× VPS 2 vCPU / 4 GB for 1 month\n1× .com domain for 1 year\n1 TB object storage for 1 month\n10k transactional emails";
@@ -226,7 +226,7 @@ export default function DeskPage() {
                 </span>
                 <p className="text-xs text-muted">
                   <span className="block text-sm text-fg">No requests yet</span>
-                  Requests for <span className="font-mono">{owner}</span> show up here.
+                  Requests for <AccountName accountId={owner} /> show up here.
                 </p>
               </div>
               <p className="eyebrow mt-6">What happens next</p>

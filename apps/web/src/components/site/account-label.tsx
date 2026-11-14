@@ -44,6 +44,17 @@ export function AccountLabel({ accountId, className = "" }: { accountId: string;
   );
 }
 
+/** An account as read-only text: the name its owner set in this browser (if any), then the short id; full id on hover. */
+export function AccountName({ accountId, className = "" }: { accountId: string; className?: string }) {
+  const name = useAccountName(accountId);
+  return (
+    <span className={`inline-flex max-w-full min-w-0 items-baseline gap-1.5 align-baseline ${className}`} title={accountId}>
+      {name && <span className="truncate font-medium text-fg">{name}</span>}
+      <span className={`shrink-0 font-mono ${name ? "text-[0.88em] text-faint" : "text-fg"}`}>{shortAccount(accountId)}</span>
+    </span>
+  );
+}
+
 /** Inline editor: Enter or ✓ saves, Escape or ✕ cancels, saving an empty name removes it. */
 export function NameEditor({ accountId, initial, onDone }: { accountId: string; initial: string; onDone: () => void }) {
   const [value, setValue] = useState(initial);
