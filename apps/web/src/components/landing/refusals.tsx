@@ -62,7 +62,7 @@ const CASES: { Icon: typeof Ban; title: string; test: string; code: string; line
   {
     Icon: Wallet, title: "Spending past your limits", test: "AT-09", code: "ERR_OVER_DAILY_CAP",
     lines: [
-      { t: "out", s: "spent today 280.00 cpUSD · daily cap 300.00 (DAO policy v3)" },
+      { t: "out", s: "spent today 960.00 cpUSD · daily cap 1000.00 (DAO policy v4)" },
       { t: "out", s: "buggy Guard signs a 81.66 cpUSD basket anyway" },
       { t: "cmd", s: "execute_basket(payload_b64, signature_b64)" },
       { t: "err", s: "Smart contract panicked: ERR_OVER_DAILY_CAP" },
@@ -74,7 +74,7 @@ const CASES: { Icon: typeof Ban; title: string; test: string; code: string; line
     lines: [
       { t: "cmd", s: "cpusd.ft_transfer → vendor-06.cpdemo.testnet  6_950_000" },
       { t: "err", s: "panicked: The account vendor-06.cpdemo.testnet is not registered" },
-      { t: "out", s: "on_payout(9f3a…c21e, 2): failure → reserved −6.95 · available +6.95" },
+      { t: "out", s: "on_payout(c8fffa7b…744d, 2): failure → reserved −6.95 · available +6.95" },
       { t: "ok", s: "EVENT payout_failed · basket_finalised PartiallyPaid" },
       { t: "note", s: "Settled from the callback only, so the refund happens exactly once." },
     ],

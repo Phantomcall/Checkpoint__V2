@@ -296,6 +296,9 @@ export function Hero() {
                   <Link href="#refusals" className="key hero-ghost h-12 px-6 text-[15px] ring-1">
                     <ShieldAlert aria-hidden className="size-4" /> What it refuses
                   </Link>
+                  <Link href="/audit?basket=bc35e2f9-5ad5-4a73-8bb2-592173882b6c" className="key hero-ghost h-12 px-6 text-[15px] ring-1">
+                    9 Nov basket
+                  </Link>
                 </div>
               </div>
             </div>

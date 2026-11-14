@@ -79,3 +79,11 @@ The demo list, typed live at 0:40 (paste it if a take runs long):
 - Save the raw recording, the terminal scrollback and every transaction hash shown on screen.
 - Copy the hashes into `docs/evidence.md` (AT-01-style rows for the basket, AT-05/06/08 for the attacks, AT-15 for the vote).
 - Check that no seed phrase, private key or `.env` value is visible in any frame.
+
+## One-minute post (not published from this repo)
+
+The submission post has to come from the team's X account. Text to paste with the video:
+
+> Built at NEAR HACKATHON. Checkpoint is a spending firewall for an agent on testnet. The agent proposes a basket, Guard signs it, the owner approves the hash, and the vault pays. In this minute: the list, Guard's signature, vendor-02 paid 59.71 cpUSD, vendor-06 refused because it is not registered, and the receipt https://testnet.nearblocks.io/txns/7FwXFW5GsNNmA4BQh3tGW936udUpgCHvTQq3bdkLnN5s
+>
+> @NEARProtocol #NEARHackathon

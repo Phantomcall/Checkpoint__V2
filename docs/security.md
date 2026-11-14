@@ -21,13 +21,13 @@ As of 9 Nov 2026, testnet, Vault policy v4. Re-check against `near account list-
 
 `dao_id` is **`checkpoint-council.sputnik-v2.testnet`** since 9 Nov (I-5.1). Since 10 Nov the council is `david-checkpoint.testnet` and `patrick-checkpoint.testnet`, and **both** must approve (Sputnik ratio 1/2 of 2 members needs 2 votes). `isaac-cp.testnet` was removed by proposal 2 when the team became two people. `cpdemo.testnet` lost admin rights at the hand-over: its `set_vendor` now fails `ERR_NOT_DAO`.
 
-## Access keys (testnet, 9 Nov)
+## Access keys (testnet, rechecked 13 Nov)
 
 | Account | Keys | Plan |
 |---|---|---|
-| `vault.cpdemo.testnet` | 1 full access (`ed25519:2omt…VT9b`) | **Remove it after the DAO hand-over (D-08).** After that the code can't be redeployed without a DAO-approved path, and the README must say so. |
+| `vault.cpdemo.testnet` | None. Full access `ed25519:2omt…VT9b` deleted 13 Nov in [`6gwftqLp3kdYj4z4nFQEU6Tc79E4CefMj5eT7TQAv9CS`](https://testnet.nearblocks.io/txns/6gwftqLp3kdYj4z4nFQEU6Tc79E4CefMj5eT7TQAv9CS), after the code hash still matched the repo. | The code cannot be replaced from this keychain. A fix needs a new account or a DAO path that does not exist on this contract. |
 | `cpusd.cpdemo.testnet` | 1 full access | Token owner (mint). Test token, no value. |
-| `agent.cpdemo.testnet` | Function-call key `ed25519:719F…FREG`: receiver `vault.cpdemo.testnet`, methods `execute_basket` only, 1 NEAR allowance (0.98 left). Plus 1 full access, kept offline. | The function-call key lives in the agents' `.env`. AT-08 shows it can't call anything else or attach deposits. |
+| `agent.cpdemo.testnet` | Function-call key `ed25519:719F…FREG` only: receiver `vault.cpdemo.testnet`, method `execute_basket`, allowance about 0.988 NEAR. Full access `ed25519:7MN9…A3dJ` deleted 13 Nov in [`388ecPLjJBb2c5bEzqenprHp4j5oDNw7P3ghTxTAiho4`](https://testnet.nearblocks.io/txns/388ecPLjJBb2c5bEzqenprHp4j5oDNw7P3ghTxTAiho4). | The function-call key lives in the agents' `.env`. AT-08 shows it can't call anything else or attach deposits. |
 | `guardian.cpdemo.testnet` | 1 full access | Pause and disable-key only |
 | `owner-demo.cpdemo.testnet` | 1 full access | Demo owner. Approvals need this key, not a function-call key. |
 | `cpdemo.testnet` | 1 full access | Root of the account tree. No Vault powers since the hand-over. |
@@ -58,7 +58,7 @@ DAO: created from the `sputnik-v2.testnet` factory with the default policy (coun
 | LLM can't choose offers, vendors or amounts; output is schema-validated and number-checked | ✅ | AT-13 |
 | No secrets in git (gitleaks in pre-commit and CI over full history) | ✅ | CI `secrets` job |
 | Agents API has no auth (anyone can open a request for any owner) | ⚠️ accepted | Nothing moves without the owner's on-chain approval. Listed as a limitation. |
-| Vault full-access key still present | ⚠️ open | Remove after the hand-over (D-08) |
+| Vault full-access key | ✅ removed 13 Nov | `6gwftq…v9CS`. The agent full-access key went in the same pass (`388ecP…iho4`). |
 | Reconciliation can't tell a deficit from in-flight transfers; it is conservative | ⚠️ documented | decisions-pending #23 |
 | Callback out-of-gas path tested only in unit tests | ⚠️ open | AT-19. A sandbox test is still to write. |
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { EventTape } from "@/components/landing/event-tape";
 import { FinalCta } from "@/components/landing/final-cta";
 import { Hero } from "@/components/landing/hero";
@@ -26,7 +27,10 @@ export default function Home() {
         <Reveal delay={120} className="mt-12">
           <ProductWindow />
           <p className="mt-3 text-center font-mono text-[10px] tracking-[0.14em] text-faint uppercase">
-            Illustration · real prices from snapshot v0 · vendor accounts are stand-ins
+            Illustration of snapshot v0 · not a chain receipt ·{" "}
+            <Link href="/audit?basket=bc35e2f9-5ad5-4a73-8bb2-592173882b6c" className="underline">
+              9 Nov basket on Audit
+            </Link>
           </p>
         </Reveal>
       </section>

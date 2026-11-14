@@ -189,11 +189,11 @@ export function VaultCard({ step }: { step: number }) {
       </p>
       <div className="mt-5 border-t vc-line pt-4 max-sm:mt-3 max-sm:pt-3">
         <div className="flex items-baseline justify-between text-[12.5px]">
-          <span className="vc-muted">Today&apos;s cap</span>
-          <span className="font-mono vc-fg tabular">{(81.66 * used).toFixed(2)} / 300.00</span>
+          <span className="vc-muted">Daily cap</span>
+          <span className="font-mono vc-fg tabular">{(81.66 * used).toFixed(2)} / 1000.00</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full vc-track">
-          <div className="h-full rounded-full bg-[linear-gradient(90deg,#b8842f,#f6dc9c,#d29f45)] transition-[width] duration-700" style={{ width: `${27.2 * used}%` }} />
+          <div className="h-full rounded-full bg-[linear-gradient(90deg,#b8842f,#f6dc9c,#d29f45)] transition-[width] duration-700" style={{ width: `${8.166 * used}%` }} />
         </div>
         <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-[12px] max-sm:mt-3 max-sm:gap-y-1.5">
           {VAULT_CHECKS.map((c, i) => {
