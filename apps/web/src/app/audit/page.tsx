@@ -11,6 +11,7 @@ import type { EvidenceBundle } from "@/lib/agents/types";
 import { config, txUrl } from "@/lib/config";
 import { formatAmount, shortHash } from "@/lib/format";
 import { hasContract, vault } from "@/lib/near";
+import { AccountName } from "@/components/site/account-label";
 import { useWallet } from "@/lib/wallet";
 
 const DEMO_OWNER = "owner-demo.cpdemo.testnet";
@@ -200,7 +201,7 @@ export default function AuditPage() {
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] text-muted">
-          Baskets for <span className="font-mono text-fg">{owner}</span>
+          Baskets for <AccountName accountId={owner} />
           {!accountId && <span className="text-faint"> · sign in to see yours</span>}
           {source && (
             <span className="ml-2 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.12em] uppercase ring-1 ring-inset ring-line">
